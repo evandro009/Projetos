@@ -15,44 +15,26 @@ Este repositório contém um protótipo de interface web para cadastro de usuár
 - **Como usar**: abra `index.html` em um navegador e preencha os campos; ao clicar em “Cadastrar”, o script associado intercepta o envio para tratar os dados no frontend.
 - **Integração com o chatbot**: os dados capturados podem ser serializados e enviados a um backend que, por sua vez, orquestra mensagens via API oficial do WhatsApp (ou provedores terceiros que possuam webhook).
 
-### Função `cadastrar()` (`script.js`)
-- **Descrição**: demonstração de chamada HTTP POST utilizando `fetch`.
-- **Assinatura**: `cadastrar(): Promise<void>`.
-- **Comportamento**:
-  - Faz uma requisição `POST` para a rota `/echo/json`.
-  - Envia um payload padrão `{ a: 1, b: 2 }` como exemplo de corpo JSON.
-  - Registra o resultado com `console.log`, tanto para sucesso quanto falha.
-- **Quando chamar**: idealmente após validar os campos do formulário e construir o objeto com os dados reais do usuário.
-- **Exemplo de uso**:
+### Função `cadastrar(dados)` (`script.js`)
+- **Descrição**: recebe os dados do formulário e realiza o cadastro em duas modalidades:
+  1. Se a variável global `window.CADASTRO_ENDPOINT` estiver definida, envia um `POST` JSON para a URL informada.
+  2. Caso contrário, persiste o cadastro no `localStorage`, simulando o backend.
+- **Assinatura**: `cadastrar(dados: CadastroPayload): Promise<RegistroCadastro>`.
+- **Parâmetros** (`CadastroPayload`):
+  - `nome` (`string`)
+  - `email` (`string`)
+  - `senha` (`string`)
+  - `telefone` (`string`)
+- **Retorno** (`RegistroCadastro`):
+  - Todos os campos enviados
+  - `id` (gerado com `crypto.randomUUID()` ou timestamp)
+  - `criadoEm` (ISO string)
+- **Erros**: lança `Error` caso a API externa retorne status não-ok ou aconteça falha no processamento.
+- **Exemplo com API externa configurada**:
 
   ```javascript
-  const payload = {
-    nome: Inome.value,
-    email: Iemail.value,
-    senha: Isenha.value,
-    telefone: Itel.value,
-  };
+  window.CADASTRO_ENDPOINT = 'https://sua-api.com/v1/cadastros';
 
-  fetch('/api/v1/contatos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  .then(resposta => resposta.json())
-  .then(dados => console.log('Contato cadastrado:', dados))
-  .catch(erro => console.error('Falha ao cadastrar:', erro));
-  ```
-
-### Listener de Envio do Formulário (`formulario.addEventListener('submit', ...)`)
-- **Descrição**: intercepta o envio do formulário, impede o comportamento padrão e consolida os valores digitados pelo usuário.
-- **Fluxo**:
-  1. Chama `event.preventDefault()` para evitar o reload da página.
-  2. Monta um objeto `dados` com os campos `nome`, `email`, `senha` e `telefone`.
-  3. Registra o objeto no console.
-- **Como integrar**: substitua o `console.log(dados)` por uma chamada a `cadastrar()` (ou a uma função semelhante) passando `dados` como parâmetro.
-- **Exemplo de integração**:
-
-  ```javascript
   formulario.addEventListener('submit', async (event) => {
     event.preventDefault();
     const dados = {
@@ -63,15 +45,27 @@ Este repositório contém um protótipo de interface web para cadastro de usuár
     };
 
     try {
-      await cadastrar(dados);
-      console.info('Cadastro enviado com sucesso');
+      const resposta = await cadastrar(dados);
+      console.log('Cadastro sincronizado com a API:', resposta);
     } catch (erro) {
-      console.error('Erro ao enviar cadastro', erro);
+      console.error('Falha ao cadastrar:', erro.message);
     }
   });
   ```
 
+### Listener de Envio do Formulário (`formulario.addEventListener('submit', ...)`)
+- **Descrição**: controla o fluxo completo de cadastro no frontend.
+- **Fluxo**:
+  1. Normaliza os valores do formulário e monta o objeto `dados`.
+  2. Valida os campos, acumulando mensagens caso haja erro (nome vazio, e-mail inválido, senha fraca, telefone fora do padrão).
+  3. Exibe feedback ao usuário (`info`, `sucesso` ou `erro`) em um elemento com atributo `data-feedback`.
+  4. Chama `cadastrar(dados)` e trata o resultado com `try/catch`.
+  5. Em caso de sucesso, limpa o formulário, retorna o foco para o campo `Nome` e registra o payload no console.
+- **Componente de feedback**: elemento `<p class="feedback" data-feedback>` com `aria-live="polite"` para acessibilidade.
+- **Quando adaptar**: substitua o fallback local por integração real assim que o endpoint do chatbot estiver disponível.
+
 ## Próximos Passos Sugeridos
-- Implementar validações de formulário (formatos de e-mail e telefone, força de senha, campos obrigatórios).
-- Adaptar `cadastrar()` para receber dinamicamente os dados do usuário e utilizar o endpoint real de integração com o WhatsApp.
-- Inserir feedback visual ao usuário (ex.: mensagens de sucesso/erro) em vez de depender apenas do console.
+- Conectar `window.CADASTRO_ENDPOINT` ao backend real responsável por orquestrar o chatbot no WhatsApp.
+- Implementar autenticação/autorização no backend antes de registrar contatos.
+- Adicionar estados visuais (classes CSS) para os tipos de feedback exibidos (`info`, `sucesso`, `erro`).
+- Criar página de listagem dos cadastros armazenados localmente para fins de depuração.

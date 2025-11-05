@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projeto API</title>
+    <title>Cadastro Chatbot WhatsApp</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <script src="/script.js"defer></script>
+    <script src="./script.js" defer></script>
 </head>
 <body>
 
     <div class="box">
         <h1>Cadastro</h1>
-        <form action="">
-            <input type="text"class="nome" name="nome"placeholder="Nome">
-            <input type="text"class="email" name="email"placeholder="Email">
-            <input type="password"class="senha" name="senha"placeholder="Senha">
-            <input type="text" class="tel" name="tel" placeholder="Telefone">
-            <button>Cadastar</button>
+        <form action="#" novalidate>
+            <input type="text" class="nome" name="nome" placeholder="Nome" autocomplete="name" required>
+            <input type="email" class="email" name="email" placeholder="Email" autocomplete="email" required>
+            <input type="password" class="senha" name="senha" placeholder="Senha" autocomplete="new-password" minlength="6" required>
+            <input type="tel" class="tel" name="tel" placeholder="Telefone com DDD" autocomplete="tel" pattern="\d{10,11}" required>
+            <button type="submit">Cadastrar</button>
         </form>
+        <p class="feedback" data-feedback role="status" aria-live="polite"></p>
     </div>
 </body>
 </html>
